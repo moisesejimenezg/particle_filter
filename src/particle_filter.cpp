@@ -51,20 +51,18 @@ void ParticleFilter::printParticles() const
 
 void ParticleFilter::init(double x, double y, double theta, double std[], int num_particles)
 {
-    std::normal_distribution<double> distribution_x{0, std[0]};
-    std::normal_distribution<double> distribution_y{0, std[1]};
-    std::normal_distribution<double> distribution_theta{0, std[2]};
     num_particles = num_particles;
     for (auto i{0}; i < num_particles; ++i)
     {
         Particle particle{};
         particle.id = i;
-        particle.x = x + distribution_x(gen);
-        particle.y = y + distribution_y(gen);
-        particle.theta = theta + distribution_theta(gen);
+        particle.x = x;
+        particle.y = y;
+        particle.theta = theta;
         particle.weight = 1.;
         particles.emplace_back(particle);
     }
+    addGaussianNoise(std);
     is_initialized = true;
 }
 
@@ -73,12 +71,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
     for (auto& particle : particles)
     {
         moveParticle(particle, velocity, yaw_rate, delta_t);
-        std::normal_distribution<double> distribution_x{0, std_pos[0]};
-        std::normal_distribution<double> distribution_y{0, std_pos[1]};
-        std::normal_distribution<double> distribution_theta{0, std_pos[2]};
-        particle.x += distribution_x(gen);
-        particle.y += distribution_y(gen);
-        particle.theta = distribution_theta(gen);
+        addGaussianNoise(std_pos);
     }
 }
 
@@ -165,4 +158,17 @@ string ParticleFilter::getSenseCoord(Particle best, string coord)
     string s = ss.str();
     s = s.substr(0, s.length() - 1);  // get rid of the trailing space
     return s;
+}
+
+void ParticleFilter::addGaussianNoise(double std[])
+{
+    for (auto& particle : particles)
+    {
+        std::normal_distribution<double> distribution_x{0, std[0]};
+        std::normal_distribution<double> distribution_y{0, std[1]};
+        std::normal_distribution<double> distribution_theta{0, std[2]};
+        particle.x += distribution_x(gen);
+        particle.y += distribution_y(gen);
+        particle.theta = distribution_theta(gen);
+    }
 }

@@ -131,6 +131,7 @@ private:
     // Vector of weights of all particles
     std::vector<double> weights;
     std::default_random_engine gen;
+    void addGaussianNoise(double std[]);
 };
 
 #endif  // PARTICLE_FILTER_H_
