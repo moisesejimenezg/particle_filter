@@ -39,6 +39,16 @@ void moveParticle(Particle& p, const double dt, const double v, const double the
     }
     p.theta += theta_dot;
 }
+
+LandmarkObs transformToMapCoordinates(const LandmarkObs& observation, const Particle& particle)
+{
+    LandmarkObs new_observation{};
+    new_observation.x = particle.x + std::cos(particle.theta) * observation.x -
+                        std::sin(particle.theta) * observation.y;
+    new_observation.y = particle.y + std::sin(particle.theta) * observation.x +
+                        std::cos(particle.theta) * observation.y;
+    return new_observation;
+}
 }  // namespace
 
 void ParticleFilter::printParticles() const
@@ -55,7 +65,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[], int nu
     for (auto i{0}; i < num_particles; ++i)
     {
         Particle particle{};
-        particle.id = i;
+        particle.id = -1;
         particle.x = x;
         particle.y = y;
         particle.theta = theta;
@@ -99,19 +109,39 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                                    const vector<LandmarkObs>& observations,
                                    const Map& map_landmarks)
 {
-    /**
-     * TODO: Update the weights of each particle using a mult-variate Gaussian
-     *   distribution. You can read more about this distribution here:
-     *   https://en.wikipedia.org/wiki/Multivariate_normal_distribution
-     * NOTE: The observations are given in the VEHICLE'S coordinate system.
-     *   Your particles are located according to the MAP'S coordinate system.
-     *   You will need to transform between the two systems. Keep in mind that
-     *   this transformation requires both rotation AND translation (but no scaling).
-     *   The following is a good resource for the theory:
-     *   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
-     *   and the following is a good resource for the actual equation to implement
-     *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
-     */
+    for (auto& particle : particles)
+    {
+        std::vector<LandmarkObs> landmarks_in_range{};
+        for (const auto landmark : map_landmarks.landmark_list)
+        {
+            if (dist(particle.x, particle.y, landmark.x_f, landmark.y_f) < sensor_range)
+            {
+                landmarks_in_range.emplace_back(
+                    LandmarkObs{landmark.id_i, landmark.x_f, landmark.y_f});
+            }
+        }
+        std::vector<LandmarkObs> transformed_observations{};
+        for (auto& observation : observations)
+        {
+            transformed_observations.emplace_back(transformToMapCoordinates(observation, particle));
+        }
+        dataAssociation(landmarks_in_range, transformed_observations);
+        auto weight = 1;
+        particle.weight = 1;
+        for (const auto& observation : transformed_observations)
+        {
+            for (const auto& landmark : landmarks_in_range)
+            {
+                if (landmark.id == observation.id)
+                {
+                    weight *= multiv_prob(std_landmark[0], std_landmark[1], observation.x,
+                                          observation.y, landmark.x, landmark.y);
+                    break;
+                }
+            }
+            particle.weight *= weight == 0 ? std::numeric_limits<double>::epsilon() : weight;
+        }
+    }
 }
 
 void ParticleFilter::resample()
