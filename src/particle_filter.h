@@ -9,6 +9,7 @@
 #ifndef PARTICLE_FILTER_H_
 #define PARTICLE_FILTER_H_
 
+#include <random>
 #include <string>
 #include <vector>
 
@@ -129,6 +130,7 @@ private:
 
     // Vector of weights of all particles
     std::vector<double> weights;
+    std::default_random_engine gen;
 };
 
 #endif  // PARTICLE_FILTER_H_

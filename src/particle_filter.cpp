@@ -13,7 +13,6 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
-#include <random>
 #include <string>
 #include <vector>
 
@@ -21,6 +20,26 @@
 
 using std::string;
 using std::vector;
+
+namespace
+{
+void moveParticle(Particle& p, const double dt, const double v, const double theta_dot)
+{
+    const auto theta_d{theta_dot * dt};
+    const auto v_d{v / theta_dot};
+    if (theta_dot > std::numeric_limits<double>::epsilon())
+    {
+        p.x += v_d * (std::sin(p.theta + theta_d) - std::sin(p.theta));
+        p.y += v_d * (std::cos(p.theta) - std::sin(p.theta + theta_d));
+    }
+    else
+    {
+        p.x += v * dt * std::cos(p.theta);
+        p.y += v * dt * std::sin(p.theta);
+    }
+    p.theta += theta_dot;
+}
+}  // namespace
 
 void ParticleFilter::printParticles() const
 {
@@ -32,18 +51,17 @@ void ParticleFilter::printParticles() const
 
 void ParticleFilter::init(double x, double y, double theta, double std[], int num_particles)
 {
-    std::default_random_engine gen;
-    std::normal_distribution<double> distribution_x{x, std[0]};
-    std::normal_distribution<double> distribution_y{y, std[1]};
-    std::normal_distribution<double> distribution_theta{theta, std[2]};
+    std::normal_distribution<double> distribution_x{0, std[0]};
+    std::normal_distribution<double> distribution_y{0, std[1]};
+    std::normal_distribution<double> distribution_theta{0, std[2]};
     num_particles = num_particles;
     for (auto i{0}; i < num_particles; ++i)
     {
         Particle particle{};
         particle.id = i;
-        particle.x = distribution_x(gen);
-        particle.y = distribution_y(gen);
-        particle.theta = distribution_theta(gen);
+        particle.x = x + distribution_x(gen);
+        particle.y = y + distribution_y(gen);
+        particle.theta = theta + distribution_theta(gen);
         particle.weight = 1.;
         particles.emplace_back(particle);
     }
@@ -52,13 +70,16 @@ void ParticleFilter::init(double x, double y, double theta, double std[], int nu
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate)
 {
-    /**
-     * TODO: Add measurements to each particle and add random Gaussian noise.
-     * NOTE: When adding noise you may find std::normal_distribution
-     *   and std::default_random_engine useful.
-     *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
-     *  http://www.cplusplus.com/reference/random/default_random_engine/
-     */
+    for (auto& particle : particles)
+    {
+        moveParticle(particle, velocity, yaw_rate, delta_t);
+        std::normal_distribution<double> distribution_x{0, std_pos[0]};
+        std::normal_distribution<double> distribution_y{0, std_pos[1]};
+        std::normal_distribution<double> distribution_theta{0, std_pos[2]};
+        particle.x += distribution_x(gen);
+        particle.y += distribution_y(gen);
+        particle.theta = distribution_theta(gen);
+    }
 }
 
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,

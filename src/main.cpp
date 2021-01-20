@@ -70,7 +70,7 @@ int main() {
             double sense_theta = std::stod(j[1]["sense_theta"].get<string>());
 
             pf.init(sense_x, sense_y, sense_theta, sigma_pos, 50);
-            //pf.printParticles();
+            pf.printParticles();
           } else {
             // Predict the vehicle's next state from previous 
             //   (noiseless control) data.
@@ -78,6 +78,7 @@ int main() {
             double previous_yawrate = std::stod(j[1]["previous_yawrate"].get<string>());
 
             pf.prediction(delta_t, sigma_pos, previous_velocity, previous_yawrate);
+            pf.printParticles();
           }
 
           // receive noisy observation data from the simulator
