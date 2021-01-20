@@ -21,9 +21,20 @@ struct Particle
     double y;
     double theta;
     double weight;
-    std::vector<int> associations;
-    std::vector<double> sense_x;
-    std::vector<double> sense_y;
+    std::vector<int> associations{};
+    std::vector<double> sense_x{};
+    std::vector<double> sense_y{};
+
+    friend std::ostream& operator<<(std::ostream& o, const Particle& d)
+    {
+        o << "Particle::print() " << std::endl;
+        o << "id: " << d.id << std::endl;
+        o << "x: " << d.x << std::endl;
+        o << "y: " << d.y << std::endl;
+        o << "theta: " << d.theta << std::endl;
+        o << "weight: " << d.weight;
+        return o;
+    }
 };
 
 class ParticleFilter
@@ -35,6 +46,7 @@ public:
 
     // Destructor
     ~ParticleFilter() {}
+    void printParticles() const;
 
     /**
      * init Initializes particle filter by initializing particles to Gaussian
@@ -45,7 +57,7 @@ public:
      * @param std[] Array of dimension 3 [standard deviation of x [m],
      *   standard deviation of y [m], standard deviation of yaw [rad]]
      */
-    void init(double x, double y, double theta, double std[]);
+    void init(double x, double y, double theta, double std[], int num_particles);
 
     /**
      * prediction Predicts the state for the next time step

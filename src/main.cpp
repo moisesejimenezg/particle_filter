@@ -69,7 +69,8 @@ int main() {
             double sense_y = std::stod(j[1]["sense_y"].get<string>());
             double sense_theta = std::stod(j[1]["sense_theta"].get<string>());
 
-            pf.init(sense_x, sense_y, sense_theta, sigma_pos);
+            pf.init(sense_x, sense_y, sense_theta, sigma_pos, 50);
+            //pf.printParticles();
           } else {
             // Predict the vehicle's next state from previous 
             //   (noiseless control) data.

@@ -22,17 +22,32 @@
 using std::string;
 using std::vector;
 
-void ParticleFilter::init(double x, double y, double theta, double std[])
+void ParticleFilter::printParticles() const
 {
-    /**
-     * TODO: Set the number of particles. Initialize all particles to
-     *   first position (based on estimates of x, y, theta and their uncertainties
-     *   from GPS) and all weights to 1.
-     * TODO: Add random Gaussian noise to each particle.
-     * NOTE: Consult particle_filter.h for more information about this method
-     *   (and others in this file).
-     */
-    num_particles = 0;  // TODO: Set the number of particles
+    for (const auto particle : particles)
+    {
+        std::cout << particle << std::endl;
+    }
+}
+
+void ParticleFilter::init(double x, double y, double theta, double std[], int num_particles)
+{
+    std::default_random_engine gen;
+    std::normal_distribution<double> distribution_x{x, std[0]};
+    std::normal_distribution<double> distribution_y{y, std[1]};
+    std::normal_distribution<double> distribution_theta{theta, std[2]};
+    num_particles = num_particles;
+    for (auto i{0}; i < num_particles; ++i)
+    {
+        Particle particle{};
+        particle.id = i;
+        particle.x = distribution_x(gen);
+        particle.y = distribution_y(gen);
+        particle.theta = distribution_theta(gen);
+        particle.weight = 1.;
+        particles.emplace_back(particle);
+    }
+    is_initialized = true;
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate)
