@@ -27,17 +27,17 @@ void moveParticle(Particle& p, const double dt, const double v, const double the
 {
     const auto theta_d{theta_dot * dt};
     const auto v_d{v / theta_dot};
-    if (theta_dot > std::numeric_limits<double>::epsilon())
+    if (std::fabs(theta_dot) > std::numeric_limits<double>::epsilon())
     {
         p.x += v_d * (std::sin(p.theta + theta_d) - std::sin(p.theta));
-        p.y += v_d * (std::cos(p.theta) - std::sin(p.theta + theta_d));
+        p.y += v_d * (std::cos(p.theta) - std::cos(p.theta + theta_d));
     }
     else
     {
         p.x += v * dt * std::cos(p.theta);
         p.y += v * dt * std::sin(p.theta);
     }
-    p.theta += theta_dot;
+    p.theta += theta_d;
 }
 
 LandmarkObs transformToMapCoordinates(const LandmarkObs& observation, const Particle& particle)
@@ -91,8 +91,8 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
     for (auto& particle : particles)
     {
         moveParticle(particle, delta_t, velocity, yaw_rate);
-        addGaussianNoise(std_pos);
     }
+    addGaussianNoise(std_pos);
 }
 
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
@@ -211,13 +211,13 @@ string ParticleFilter::getSenseCoord(Particle best, string coord)
 
 void ParticleFilter::addGaussianNoise(double std[])
 {
+    std::normal_distribution<double> distribution_x{0, std[0]};
+    std::normal_distribution<double> distribution_y{0, std[1]};
+    std::normal_distribution<double> distribution_theta{0, std[2]};
     for (auto& particle : particles)
     {
-        std::normal_distribution<double> distribution_x{0, std[0]};
-        std::normal_distribution<double> distribution_y{0, std[1]};
-        std::normal_distribution<double> distribution_theta{0, std[2]};
         particle.x += distribution_x(gen);
         particle.y += distribution_y(gen);
-        particle.theta = distribution_theta(gen);
+        particle.theta += distribution_theta(gen);
     }
 }
