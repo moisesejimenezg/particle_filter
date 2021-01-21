@@ -90,7 +90,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 {
     for (auto& particle : particles)
     {
-        moveParticle(particle, velocity, yaw_rate, delta_t);
+        moveParticle(particle, delta_t, velocity, yaw_rate);
         addGaussianNoise(std_pos);
     }
 }
