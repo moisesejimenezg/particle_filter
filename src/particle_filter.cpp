@@ -49,6 +49,16 @@ LandmarkObs transformToMapCoordinates(const LandmarkObs& observation, const Part
                         std::cos(particle.theta) * observation.y;
     return new_observation;
 }
+
+std::vector<double> extractWeights(const std::vector<Particle>& particles)
+{
+    std::vector<double> weights{};
+    for (const auto& p : particles)
+    {
+        weights.emplace_back(p.weight);
+    }
+    return weights;
+}
 }  // namespace
 
 void ParticleFilter::printParticles() const
@@ -146,12 +156,14 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 void ParticleFilter::resample()
 {
-    /**
-     * TODO: Resample particles with replacement with probability proportional
-     *   to their weight.
-     * NOTE: You may find std::discrete_distribution helpful here.
-     *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
-     */
+    const auto weights{extractWeights(particles)};
+    std::discrete_distribution<int> distribution{weights.cbegin(), weights.cend()};
+    decltype(particles) new_particles{};
+    for (auto i{0u}; i < particles.size(); ++i)
+    {
+        new_particles.emplace_back(particles[distribution(gen)]);
+    }
+    particles = new_particles;
 }
 
 void ParticleFilter::SetAssociations(Particle& particle, const vector<int>& associations,

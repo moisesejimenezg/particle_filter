@@ -25,6 +25,8 @@ string hasData(string s) {
   return "";
 }
 
+const int num_particles = 50U;
+
 int main() {
   uWS::Hub h;
 
@@ -69,7 +71,7 @@ int main() {
             double sense_y = std::stod(j[1]["sense_y"].get<string>());
             double sense_theta = std::stod(j[1]["sense_theta"].get<string>());
 
-            pf.init(sense_x, sense_y, sense_theta, sigma_pos, 50);
+            pf.init(sense_x, sense_y, sense_theta, sigma_pos, num_particles);
             pf.printParticles();
           } else {
             // Predict the vehicle's next state from previous 
